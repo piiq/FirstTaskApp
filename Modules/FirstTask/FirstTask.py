@@ -89,6 +89,8 @@ class FirstTaskWidget(ScriptedLoadableModuleWidget):
     self.togglePythonInteractorButton.connect('clicked()', self.onTogglePythonInteractorButton)
     self.exitButton.connect('clicked()', self.onExitButtonClicked)
 
+    # A function for togglable DICOM browser
+    self.ui.showDicomBrowserButton.toggled.connect(self.onShowDicomBrowserButtonToggled)
   #------------------------------------------------------------------------------
   def disconnect(self):
     logging.debug('FirstTask.disconnect')
@@ -101,6 +103,9 @@ class FirstTaskWidget(ScriptedLoadableModuleWidget):
     self.showSliceletButton.clicked.disconnect()
     self.togglePythonInteractorButton.clicked.disconnect()
     self.exitButton.clicked.disconnect()
+
+    # Disconnect DICOM browser
+    self.ui.showDicomBrowserButton.toggled.disconnect()
 
   #------------------------------------------------------------------------------
   def loadStyleSheet(self):
@@ -264,6 +269,20 @@ class FirstTaskWidget(ScriptedLoadableModuleWidget):
     visible = slicer.util.mainWindow().pythonConsole().parent().visible
     slicer.util.mainWindow().pythonConsole().parent().setVisible(not visible)
 
+  def onShowDicomBrowserButtonToggled(self, on):
+    """
+    Show dicom browser
+
+    Called when show dicom browser button is toggled.
+
+    :param      on:   Toggle value
+    :type       on:   { type_description } # TODO: Check "on" type for docscting
+    """
+    if on:
+      dicomWidget = slicer.modules.dicom.widgetRepresentation().self()
+      slicer.modules.DICOMWidget.enter()
+    else:
+      slicer.modules.DICOMWidget.exit()
   #------------------------------------------------------------------------------
   # Settings
   #------------------------------------------------------------------------------
