@@ -312,12 +312,12 @@ class FirstTaskWidget(ScriptedLoadableModuleWidget):
 
   def onShowDicomBrowserButtonToggled(self, on):
     """
-    Show dicom browser
+    Show dicom browser.
 
     Called when show dicom browser button is toggled.
 
     :param      on:   Toggle value
-    :type       on:   { type_description } # TODO: Check "on" type for docscting
+    :type       on:   bool
     """
     if on:
       dicomWidget = slicer.modules.dicom.widgetRepresentation().self()
