@@ -91,6 +91,39 @@ class FirstTaskWidget(ScriptedLoadableModuleWidget):
 
     # A function for togglable DICOM browser
     self.ui.showDicomBrowserButton.toggled.connect(self.onShowDicomBrowserButtonToggled)
+
+    # A function for reacting to MRML scene changes
+    self.parent.mrmlSceneChanged.connect(self.onMrmlSceneChanged)
+
+    # A function for reacting to a changed selected item in Subject Hierarchy
+    self.ui.SubjectHierarchyTreeView.currentItemChanged.connect(self.onSubjectHierarchyTreeViewCurrentItemChanged)
+
+  def onSubjectHierarchyTreeViewCurrentItemChanged(self, itemID):
+    if not itemID:
+      logging.error('Invalid item for view context menu ' + str(itemID))
+      return
+
+    # Get Subject Hierarchy
+    shNode = slicer.mrmlScene.GetSubjectHierarchyNode()
+    # TODO: learn the difference between the line above and the following two:
+    # shNode = slicer.vtkMRMLSubjectHierarchyNode.GetSubjectHierarchyNode(slicer.mrmlScene)
+    # shNode = pluginHandlerSingleton.subjectHierarchyNode()
+
+    if shNode is None:
+      logging.error('Failed to access subject hierarchy node')
+      return
+
+    # Get data node of the CurrentItemChanged
+    node = shNode.GetItemDataNode(itemID)
+    # Check that we have selected a proper volume node
+    if node is None:
+      self.ui.VolumeInfoWidget.setVolumeNode(None)
+    else:
+      if node.IsA("vtkMRMLScalarVolumeNode"):
+        self.ui.VolumeInfoWidget.setVolumeNode(node)
+      else:
+        self.ui.VolumeInfoWidget.setVolumeNode(None)
+
   #------------------------------------------------------------------------------
   def disconnect(self):
     logging.debug('FirstTask.disconnect')
@@ -191,6 +224,14 @@ class FirstTaskWidget(ScriptedLoadableModuleWidget):
 
     self.sliceletPanelLayout.addWidget(uiWidget)
 
+    # Hierarchy tree view
+    self.ui.SubjectHierarchyTreeView.dragDropMode = qt.QAbstractItemView.InternalMove
+    self.ui.SubjectHierarchyTreeView.selectionMode = qt.QAbstractItemView.ExtendedSelection
+    self.ui.SubjectHierarchyTreeView.setColumnHidden(self.ui.SubjectHierarchyTreeView.model().idColumn, True)
+    self.ui.SubjectHierarchyTreeView.setColumnHidden(self.ui.SubjectHierarchyTreeView.model().transformColumn, True)
+    self.ui.SubjectHierarchyTreeView.setEditTriggers(qt.QAbstractItemView.DoubleClicked)
+
+
   #------------------------------------------------------------------------------
   def showSlicelet(self, maximizeViews=False, maximizeMainWindow=False, hideStatusBar=True):
     settings = qt.QSettings()
@@ -283,6 +324,12 @@ class FirstTaskWidget(ScriptedLoadableModuleWidget):
       slicer.modules.DICOMWidget.enter()
     else:
       slicer.modules.DICOMWidget.exit()
+
+  def onMrmlSceneChanged(self, mrmlScene):
+    """React to MRML scene change."""
+    self.ui.SubjectHierarchyTreeView.setMRMLScene(slicer.mrmlScene)
+    self.ui.VolumeInfoWidget.setMRMLScene(slicer.mrmlScene)
+
   #------------------------------------------------------------------------------
   # Settings
   #------------------------------------------------------------------------------
